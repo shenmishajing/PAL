@@ -2,7 +2,7 @@ trainer:
     logger:
         class_path: utils.loggers.wandb.WandbNamedLogger
         init_args:
-            project: mmdet_lightning
+            project: multi_rotate_detecton_to_segmentation
             save_dir: work_dirs
             offline: false
     callbacks:
