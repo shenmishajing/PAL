@@ -1,0 +1,17 @@
+__base__: livecell_segmentation.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            train:
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoDataset
+                init_args:
+                    pipeline:
+                        insert_item:
+                            - [1, type: mmdet.RotateImage]
+                        change_item:
+                            - - -1
+                              - meta_keys:
+                                    post_item: theta
+            val:
+                class_path: mmdet.datasets.coco.CocoDataset

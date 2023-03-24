@@ -1,0 +1,13 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/coco_dna/coco_dna_detection_predict_rotate.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/dino/dino-4scale_r50.yaml
+
+model:
+    class_path: models.generate_pesudo_detection_annotation.GeneratePesudeDetectionAnnotation
+    init_args:
+        model:
+            init_args:
+                bbox_head:
+                    num_classes: 1
