@@ -2,7 +2,7 @@ model:
     class_path: models.mmdet_model_adapter.MMDetModelAdapter
     init_args:
         model:
-            class_path: models.two_stage.TwoStageDetector
+            class_path: models.models.two_stage.TwoStageDetector
             init_args:
                 backbone:
                     depth: 50

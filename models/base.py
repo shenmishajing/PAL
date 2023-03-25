@@ -106,7 +106,7 @@ class LightningModule(_LightningModule, ABC):
     def output_paths(self):
         return self._output_paths
 
-    def on_predict_start(self) -> None:
+    def on_predict_epoch_start(self) -> None:
         output_path = os.path.join(
             os.path.dirname(os.path.dirname(self.trainer.ckpt_path)), "visualization"
         )
@@ -116,6 +116,10 @@ class LightningModule(_LightningModule, ABC):
             self.rm_and_create(path)
             setattr(self, name + "_output_path", path)
 
+    def predict_forward(self, *args, **kwargs):
+        return {}
+
     def predict_step(self, *args, **kwargs):
+        res = self.predict_forward(*args, **kwargs)
         for name in self.output_paths:
-            getattr(self, name + "_visualization")(*args, **kwargs)
+            getattr(self, name + "_visualization")(*args, **kwargs, **res)

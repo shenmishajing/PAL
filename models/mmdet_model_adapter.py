@@ -80,7 +80,9 @@ class MMDetModelAdapter(LightningModule, BaseModule, ABC):
         self.log_dict(self.flatten_dict(log_vars))
         return log_vars
 
-    def cam_visualization(self, batch, *args, **kwargs):
+    def predict_forward(self, batch, *args, **kwargs):
+        predict_outputs = self(batch, mode="predict")
+
         batch = self.model.data_preprocessor(batch)
 
         if isinstance(batch, dict):
@@ -89,7 +91,7 @@ class MMDetModelAdapter(LightningModule, BaseModule, ABC):
         elif isinstance(batch, (list, tuple)):
             inputs, data_samples = batch
 
-        outputs = [
+        feature_map_outputs = [
             nn.functional.interpolate(
                 output.mean(dim=1, keepdim=True),
                 size=data_samples[0].batch_input_shape,
@@ -97,18 +99,24 @@ class MMDetModelAdapter(LightningModule, BaseModule, ABC):
             )
             for output in self.model.extract_feat(inputs)
         ]
-        outputs = [
+        feature_map_outputs = [
             ((output - output.min()) / (output.max() - output.min(output)) * 255 + 0.5)
             .clamp_(0, 255)
             .permute(0, 2, 3, 1)
             .to("cpu", torch.uint8)
             .numpy()
-            for output in outputs
+            for output in feature_map_outputs
         ]
+        return {
+            "predict_outputs": predict_outputs,
+            "feature_map_outputs": feature_map_outputs,
+            "data_samples": data_samples,
+        }
 
+    def cam_visualization(self, *args, data_samples, feature_map_outputs, **kwargs):
         for i, data_sample in enumerate(data_samples):
             name = os.path.basename(data_sample.img_path)
-            for layer_num, output in enumerate(outputs):
+            for layer_num, output in enumerate(feature_map_outputs):
                 mmcv.imwrite(
                     cv2.applyColorMap(output[i], cv2.COLORMAP_JET),
                     os.path.join(
@@ -121,8 +129,8 @@ class MMDetModelAdapter(LightningModule, BaseModule, ABC):
                 os.path.join(self.cam_output_path, name),
             )
 
-    def result_visualization(self, batch, *args, **kwargs):
-        for output in self(batch, mode="predict"):
+    def result_visualization(self, *args, predict_outputs, **kwargs):
+        for output in predict_outputs:
             # rescale gt bboxes
             assert output.get("scale_factor") is not None
             output.gt_instances.bboxes /= output.gt_instances.bboxes.new_tensor(
