@@ -16,7 +16,7 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
         )
 
         ann = json.load(open(self.trainer.datamodule.dataset.ann_file))
-        ann.pop("annotations")
+        ann["annotations"] = []
 
         self.ann_id = {}
         self.ann_jsons = {}
@@ -44,7 +44,7 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
             for box, label in zip(bboxes, labels):
                 theta = int(output.theta)
                 self.ann_id[theta] += 1
-                self.ann_jsons[theta].append(
+                self.ann_jsons[theta]["annotations"].append(
                     {
                         "image_id": output.img_id,
                         "category_id": self.trainer.datamodule.dataset.cat_ids[label],
