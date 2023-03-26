@@ -3,10 +3,15 @@ __base__: coco_dna_detection.yaml
 data:
     init_args:
         dataset_cfg:
+            split_info:
+                split_name_map:
+                    predict: train
             predict:
                 class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoDataset
                 init_args:
                     add_origin: false
+                    data_prefix:
+                        img: train
                     pipeline:
                         insert_item:
                             - [1, type: mmdet.RotateImage]
