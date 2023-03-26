@@ -66,6 +66,10 @@ data:
                                   "img_shape",
                                   "scale_factor",
                               ]
+            test:
+                init_args:
+                    data_prefix:
+                        img: images/livecell_test_images
         dataloader_cfg:
             train:
                 batch_size: 1
