@@ -22,11 +22,7 @@ class RotatedCocoDataset(CocoDataset):
         super().__init__(*args, **kwargs)
 
     def load_data_list(self) -> List[dict]:
-        if self.add_origin:
-            data_list = super().load_data_list()
-        else:
-            data_list = []
-
+        data_list = []
         origin_ann_file = self.ann_file
         for theta in range(0, self.max_theta, self.theta):
             ann_file = origin_ann_file.replace(
@@ -40,4 +36,6 @@ class RotatedCocoDataset(CocoDataset):
                 d["theta"] = theta + self.theta
             data_list.extend(cur_data_list)
         self.ann_file = origin_ann_file
+        if self.add_origin:
+            data_list.extend(super().load_data_list())
         return data_list
