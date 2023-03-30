@@ -1,0 +1,12 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/coco_dna/coco_dna_segmentation_train_rotate_val_origin.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/boxinst/boxinst_r50_fpn.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                bbox_head:
+                    num_classes: 1

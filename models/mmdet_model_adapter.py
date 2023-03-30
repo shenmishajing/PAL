@@ -6,6 +6,7 @@ from types import MethodType
 import cv2
 import mmcv
 import torch
+from mmengine import MessageHub
 from mmengine.model import BaseModule
 from torch import nn
 
@@ -76,6 +77,8 @@ class MMDetModelAdapter(LightningModule, BaseModule, ABC):
         return log_vars
 
     def training_step(self, batch, *args, **kwargs):
+        message_hub = MessageHub.get_current_instance()
+        message_hub.update_info("iter", self.trainer.global_step)
         _, log_vars = self.model.parse_losses(self(batch))
         self.log_dict(self.flatten_dict(log_vars))
         return log_vars
