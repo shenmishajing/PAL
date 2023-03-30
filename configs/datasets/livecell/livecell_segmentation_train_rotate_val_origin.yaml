@@ -1,7 +1,12 @@
-__base__: livecell_segmentation.yaml
+__base__: livecell_detection.yaml
 
 data:
     init_args:
+        evaluator_cfg:
+            val:
+                init_args:
+                    metrics:
+                        metric: segm
         dataset_cfg:
             train:
                 class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoDataset
@@ -9,9 +14,19 @@ data:
                     pipeline:
                         insert_item:
                             - [1, type: mmdet.RotateImage]
-                        change_item:
-                            - - -1
-                              - meta_keys:
-                                    post_item: theta
             val:
                 class_path: mmdet.datasets.coco.CocoDataset
+                init_args:
+                    pipeline:
+                        change_item:
+                            - - 1
+                              - with_mask: true
+
+trainer:
+    callbacks:
+        change_item:
+            - - 0
+              - init_args:
+                    monitor: val/coco/segm_mAP_50
+                    filename: "epoch:{epoch}-val_map_50:{val/coco/segm_mAP_50:.4g}"
+                    mode: max
