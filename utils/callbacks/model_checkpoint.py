@@ -17,7 +17,8 @@ class ModelCheckpointWithLinkBest(ModelCheckpoint):
     def setup(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", stage: str
     ) -> None:
-        self.dirpath = os.path.join(trainer.log_dir, "checkpoints")
+        if trainer.log_dir:
+            self.dirpath = os.path.join(trainer.log_dir, "checkpoints")
         super().setup(trainer, pl_module, stage)
 
     def _update_best_and_save(
