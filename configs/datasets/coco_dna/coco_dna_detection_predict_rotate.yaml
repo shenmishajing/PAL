@@ -9,7 +9,8 @@ data:
             predict:
                 class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoDataset
                 init_args:
-                    add_origin: false
+                    # add_origin: false
+                    # length: 10
                     data_prefix:
                         img: train
                     pipeline:
