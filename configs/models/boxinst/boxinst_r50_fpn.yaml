@@ -115,3 +115,14 @@ model:
                         type: nms
                     nms_pre: 1000
                     score_thr: 0.05
+
+trainer:
+    check_val_every_n_epoch: 1000
+    callbacks:
+        change_item:
+            - - 0
+              - init_args:
+                    monitor: null
+                    filename: "epoch:{epoch}-train_loss:{train/loss:.4g}"
+                    save_top_k: -1
+                    save_best: false

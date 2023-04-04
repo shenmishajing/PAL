@@ -1,0 +1,19 @@
+__base__: coco_dna_detection.yaml
+
+data:
+    init_args:
+        evaluator_cfg:
+            test:
+                init_args:
+                    metrics:
+                        metric: segm
+        dataset_cfg:
+            test:
+                init_args:
+                    pipeline:
+                        change_item:
+                            - - 1
+                              - with_mask: true
+
+trainer:
+    __delete__: true
