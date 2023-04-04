@@ -59,7 +59,6 @@ trainer:
     strategy:
         class_path: lightning.pytorch.strategies.DDPStrategy
         init_args:
-            # find_unused_parameters: false
             find_unused_parameters: true
             gradient_as_bucket_view: true
     precision: 32
