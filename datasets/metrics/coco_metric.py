@@ -84,4 +84,5 @@ class CocoMetric(_CocoMetric):
         if self.encode_mask_results_pool is not None:
             self.encode_mask_results_pool.close()
             self.encode_mask_results_pool.join()
+            self.encode_mask_results_pool = None
         return super().evaluate(*args, **kwargs)
