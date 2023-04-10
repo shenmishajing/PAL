@@ -145,6 +145,18 @@ class RotateImage(BaseTransform):
         return repr_str
 
 
+@TRANSFORMS.register_module(force=True)
+class RandomFlip(_RandomFlip):
+    def _flip(self, results: dict) -> None:
+        super()._flip(results)
+        if (
+            "theta" in results
+            and results["theta"]
+            and results["flip_direction"] in ["horizontal", "vertical"]
+        ):
+            results["theta"] = -results["theta"]
+
+
 def main():
     output_path = "rotate_image"
     if os.path.exists(output_path):
