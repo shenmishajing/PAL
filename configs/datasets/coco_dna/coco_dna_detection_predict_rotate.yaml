@@ -7,7 +7,7 @@ data:
                 split_name_map:
                     predict: train
             predict:
-                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoDataset
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoOriginAnnDataset
                 init_args:
                     # add_origin: false
                     # length: 10
