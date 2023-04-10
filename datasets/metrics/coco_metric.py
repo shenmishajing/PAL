@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import multiprocessing
+import timeit
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import Sequence
 
 import numpy as np
@@ -86,3 +88,146 @@ class CocoMetric(_CocoMetric):
             self.encode_mask_results_pool.join()
             self.encode_mask_results_pool = None
         return super().evaluate(*args, **kwargs)
+
+
+def encode_mask_results(mask_results):
+    """Encode bitmap mask to RLE code.
+
+    Args:
+        mask_results (list): bitmap mask results.
+
+    Returns:
+        list | tuple: RLE encoded mask.
+    """
+    encoded_mask_results = []
+    for mask in mask_results:
+        encoded_mask_results.append(
+            mask_util.encode(
+                np.array(mask[:, :, np.newaxis], order="F", dtype="uint8")
+            )[0]
+        )  # encoded with RLE
+    return encoded_mask_results
+
+
+def pycoco_encode_mask_results(mask_results):
+    """Encode bitmap mask to RLE code.
+
+    Args:
+        mask_results (list): bitmap mask results.
+
+    Returns:
+        list | tuple: RLE encoded mask.
+    """
+    return mask_util.encode(
+        mask_results.transpose(1, 2, 0).astype(np.uint8, "F", copy=False)
+    )
+
+
+def expand_encode_mask_results(mask_results):
+    """Encode bitmap mask to RLE code.
+
+    Args:
+        mask_results (list): bitmap mask results.
+
+    Returns:
+        list | tuple: RLE encoded mask.
+    """
+    encoded_mask_results = []
+    for mask in mask_results:
+        encoded_mask_results.append(
+            mask_util.encode(
+                np.array(np.expand_dims(mask, axis=-1), order="F", dtype="uint8")
+            )[0]
+        )  # encoded with RLE
+    return encoded_mask_results
+
+
+def do_encode_mask_results(mask):
+    return mask_util.encode(np.array(mask[:, :, np.newaxis], order="F", dtype="uint8"))[
+        0
+    ]
+
+
+def multi_process_encode_mask_results(mask_results, pool):
+    """Encode bitmap mask to RLE code.
+
+    Args:
+        mask_results (list): bitmap mask results.
+
+    Returns:
+        list | tuple: RLE encoded mask.
+    """
+    return pool.map(do_encode_mask_results, mask_results)
+
+
+def executor_encode_mask_results(mask_results, excuter):
+    """Encode bitmap mask to RLE code.
+
+    Args:
+        mask_results (list): bitmap mask results.
+
+    Returns:
+        list | tuple: RLE encoded mask.
+    """
+    return list(excuter.map(do_encode_mask_results, mask_results))
+
+
+def time_func(func_name, arg_str="mask_results", **kwargs):
+    times = timeit.repeat(
+        f"{func_name}({arg_str})", f"from __main__ import {func_name}", **kwargs
+    )
+    if isinstance(times, list) and len(times) > 1:
+        m = np.mean(times)
+        s = np.std(times)
+    else:
+        m = times
+        s = 0
+    print(f"{func_name}, mean={m}, std={s}")
+
+
+def speed_benchmark():
+    kwargs = dict(
+        globals=dict(
+            mask_results=np.random.random((100, 4000, 2000)) > 0.5,
+            pool=multiprocessing.Pool(),
+            thread_pool=ThreadPoolExecutor(48),
+            process_pool=ProcessPoolExecutor(),
+        ),
+        repeat=5,
+        number=1,
+    )
+
+    time_func("encode_mask_results", **kwargs)
+    time_func("pycoco_encode_mask_results", **kwargs)
+    time_func("expand_encode_mask_results", **kwargs)
+    time_func(
+        "multi_process_encode_mask_results", arg_str="mask_results, pool", **kwargs
+    )
+    time_func(
+        "executor_encode_mask_results", arg_str="mask_results, thread_pool", **kwargs
+    )
+    time_func(
+        "executor_encode_mask_results", arg_str="mask_results, process_pool", **kwargs
+    )
+
+
+def correct_assert():
+    mask_results = np.random.random((100, 4000, 2000)) > 0.5
+
+    res = encode_mask_results(mask_results)
+    assert res == pycoco_encode_mask_results(mask_results)
+    assert res == expand_encode_mask_results(mask_results)
+    assert res == multi_process_encode_mask_results(
+        mask_results, multiprocessing.Pool()
+    )
+    assert res == executor_encode_mask_results(mask_results, ThreadPoolExecutor(48))
+    assert res == executor_encode_mask_results(mask_results, ProcessPoolExecutor())
+
+
+def main():
+    speed_benchmark()
+    correct_assert()
+
+
+if __name__ == "__main__":
+    main()
