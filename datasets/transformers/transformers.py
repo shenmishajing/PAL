@@ -6,7 +6,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from mmcv.transforms import BaseTransform
+from mmdet.datasets.transforms import RandomFlip as _RandomFlip
 from mmdet.registry import TRANSFORMS
+
+
+def get_3x3_rotate_matrix(m):
+    return np.concatenate([m, np.array([[0, 0, 1]])], axis=0)
 
 
 def get_rotate_marix(angle, scale):
@@ -18,42 +23,42 @@ def get_rotate_marix(angle, scale):
     # 参数3为各向同性的比例因子,1.0原图，2.0变成原来的2倍，0.5变成原来的0.5倍
     M = cv2.getRotationMatrix2D(rotate_center, angle, 1.0)
     # 计算图像新边界
-    new_w = int(h * np.abs(M[0, 1]) + w * np.abs(M[0, 0]))
-    new_h = int(h * np.abs(M[0, 0]) + w * np.abs(M[0, 1]))
+    big_w = int(h * np.abs(M[0, 1]) + w * np.abs(M[0, 0]))
+    big_h = int(h * np.abs(M[0, 0]) + w * np.abs(M[0, 1]))
     # 调整旋转矩阵以考虑平移
-    M[0, 2] += (new_w - w) / 2
-    M[1, 2] += (new_h - h) / 2
-    return M, (new_h, new_w)
+    M[0, 2] += (big_w - w) / 2
+    M[1, 2] += (big_h - h) / 2
+    return M, (big_h, big_w)
 
 
-def get_reverse_rotate_marix(angle, scale, new_scale):
-    h, w = scale
-    rotate_center = (w / 2, h / 2)
-    # 获取旋转矩阵
-    # 参数1为旋转中心点;
-    # 参数2为旋转角度,正值-逆时针旋转;负值-顺时针旋转
-    # 参数3为各向同性的比例因子,1.0原图，2.0变成原来的2倍，0.5变成原来的0.5倍
-    M = cv2.getRotationMatrix2D(rotate_center, -angle, 1.0)
-    # 计算图像新边界
+def get_reverse_rotate_marix(angle, scale):
+    M, big_scale = get_rotate_marix(angle, scale)
+    return np.linalg.pinv(get_3x3_rotate_matrix(M))[:2], big_scale
+
+
+def rotate_matrix_to_theta(M_inv, new_scale, img):
+    h, w = img.shape[-2:]
     new_h, new_w = new_scale
-    # 调整旋转矩阵以考虑平移
-    M[0, 2] += (new_w - w) / 2
-    M[1, 2] += (new_h - h) / 2
-    return M
+    M_inv = get_3x3_rotate_matrix(M_inv)
+    return (
+        img.new_tensor([[2 / w, 0, -1], [0, 2 / h, -1]])
+        .mm(img.new_tensor(M_inv))
+        .mm(
+            img.new_tensor(
+                [[2 / new_w, 0, -1], [0, 2 / new_h, -1], [0, 0, 1]]
+            ).pinverse()
+        )[None]
+    )
 
 
-def rotate_matrix_to_theta(M, scale, new_scale, img):
-    h, w = scale
-    new_h, new_w = new_scale
-    M = np.concatenate([M, np.array([[0, 0, 1]])], axis=0)
-    theta = img.new_tensor([[2 / w, 0, -1], [0, 2 / h, -1], [0, 0, 1]]).mm(
-        torch.linalg.pinv(
-            img.new_tensor([[2 / new_w, 0, -1], [0, 2 / new_h, -1], [0, 0, 1]]).mm(
-                img.new_tensor(M)
-            )
-        )
-    )[None, :2, :]
-    return theta
+def get_rotate_theta(angle, img):
+    M_inv, big_scale = get_reverse_rotate_marix(angle, img.shape[-2:])
+    return rotate_matrix_to_theta(M_inv, big_scale, img), big_scale
+
+
+def get_reverse_rotate_theta(angle, scale, img):
+    M_inv, _ = get_rotate_marix(angle, scale)
+    return rotate_matrix_to_theta(M_inv, scale, img), scale
 
 
 def troch_grid_sample(img, theta, scale):
@@ -71,21 +76,21 @@ def rotate_img(img, angle):
     angle --rotation angle
     return--rotated img
     """
-    M, new_scale = get_rotate_marix(angle, img.shape[:2])
+    M, big_scale = get_rotate_marix(angle, img.shape[:2])
     return cv2.warpAffine(
-        img, M, (new_scale[1], new_scale[0]), borderMode=cv2.BORDER_REFLECT101
+        img, M, (big_scale[1], big_scale[0]), borderMode=cv2.BORDER_REFLECT101
     )
 
 
-def reverse_rotate_img(img, angle, old_scale):
+def reverse_rotate_img(img, angle, scale):
     """
     img   --image
     angle --rotation angle
     return--rotated img
     """
-    M = get_reverse_rotate_marix(angle, img.shape[:2], old_scale)
+    M, _ = get_reverse_rotate_marix(angle, scale)
     return cv2.warpAffine(
-        img, M, (old_scale[1], old_scale[0]), borderMode=cv2.BORDER_REFLECT101
+        img, M, (scale[1], scale[0]), borderMode=cv2.BORDER_REFLECT101
     )
 
 
@@ -95,9 +100,7 @@ def torch_rotate_img(img, angle):
     angle --rotation angle
     return--rotated img
     """
-    M, new_scale = get_rotate_marix(angle, img.shape[-2:])
-    theta = rotate_matrix_to_theta(M, img.shape[-2:], new_scale, img)
-    return troch_grid_sample(img, theta, new_scale)
+    return troch_grid_sample(img, *get_rotate_theta(angle, img))
 
 
 def torch_reverse_rotate_img(img, angle, old_scale):
@@ -106,9 +109,7 @@ def torch_reverse_rotate_img(img, angle, old_scale):
     angle --rotation angle
     return--rotated img
     """
-    M = get_reverse_rotate_marix(angle, img.shape[-2:], old_scale)
-    theta = rotate_matrix_to_theta(M, img.shape[-2:], old_scale, img)
-    return troch_grid_sample(img, theta, old_scale)
+    return troch_grid_sample(img, *get_reverse_rotate_theta(angle, old_scale, img))
 
 
 @TRANSFORMS.register_module()
@@ -181,15 +182,6 @@ def main():
             os.path.join(output_path, f"torch_rotate_{theta}.jpg"), torch_rotated_image
         )
 
-        torch_rotated_image = (
-            torch_rotate_img(
-                torch.from_numpy(image).permute(2, 0, 1).float().cuda()[None], theta
-            )
-            .to(torch.uint8)[0]
-            .permute(1, 2, 0)
-            .cpu()
-            .numpy()
-        )
         torch_back_image = (
             torch_reverse_rotate_img(
                 torch.from_numpy(torch_rotated_image)
