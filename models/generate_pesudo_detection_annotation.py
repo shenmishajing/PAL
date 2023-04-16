@@ -4,7 +4,12 @@ import os
 
 import mmcv
 
-from datasets import rotate_img
+from datasets import (
+    get_bboxes_from_points,
+    prepare_bbox_points,
+    reverse_rotate_points,
+    rotate_img,
+)
 
 from .mmdet_model_adapter import MMDetModelAdapter
 
@@ -13,6 +18,7 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._output_paths = ["annotation"]
+        # self._output_paths = ["rotate_back_result"]
 
     def on_predict_epoch_start(self) -> None:
         super().on_predict_epoch_start()
@@ -85,6 +91,31 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
                 image,
                 output,
                 out_file=os.path.join(self.result_output_path, name),
+                draw_gt=False,
+                **self.visualizer_kwargs,
+            )
+
+    def rotate_back_result_visualization(self, *args, predict_outputs, **kwargs):
+        for output in predict_outputs:
+            # result visualization
+            output.pred_instances.bboxes = get_bboxes_from_points(
+                reverse_rotate_points(
+                    prepare_bbox_points(output.pred_instances.bboxes),
+                    output.theta,
+                    output.ori_shape,
+                )
+            )
+
+            name = os.path.basename(output.img_path)
+            image = mmcv.imread(output.img_path, channel_order="rgb")
+            if output.get("theta"):
+                name, ext = os.path.splitext(name)
+                name = f"{name}_theta={int(output.theta)}{ext}"
+            self.trainer.datamodule.visualizers["predict"].add_datasample(
+                name,
+                image,
+                output,
+                out_file=os.path.join(self.rotate_back_result_output_path, name),
                 **self.visualizer_kwargs,
             )
 
