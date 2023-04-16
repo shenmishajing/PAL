@@ -1,0 +1,11 @@
+__base__: boxinst_r50_fpn.yaml
+
+model:
+    init_args:
+        model:
+            class_path: models.models.rotate_single_stage_instance_seg.RotateSingleStageInstanceSegmentor
+            init_args:
+                data_preprocessor:
+                    type: mmdet.RotateBoxInstDataPreprocessor
+                mask_head:
+                    type: RotateBoxInstMaskHead
