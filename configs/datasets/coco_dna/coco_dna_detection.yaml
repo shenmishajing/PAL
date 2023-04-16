@@ -72,7 +72,7 @@ data:
                               ]
         dataloader_cfg:
             train:
-                batch_size: 4
+                batch_size: 6
                 num_workers: 16
                 persistent_workers: true
                 pin_memory: true
@@ -81,7 +81,10 @@ data:
                 batch_sampler:
                     class_path: datasets.mmdet_dataset_adapter.AspectRatioBatchSampler
             val:
-                batch_size: 1
+                batch_size: 6
+            predict:
+                batch_size: 48
+                num_workers: 24
 
 trainer:
     callbacks:
