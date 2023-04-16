@@ -44,6 +44,7 @@ class RichDefaultThemeProgressBar(RichProgressBar):
             self.show_eta_time
             and self.trainer.training
             and self.trainer.max_epochs is not None
+            and self.progress
         ):
             during_time = time.time() - self.start_time
             time_sec_avg = during_time / (
