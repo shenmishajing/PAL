@@ -112,6 +112,62 @@ def torch_reverse_rotate_img(img, angle, old_scale):
     return troch_grid_sample(img, *get_reverse_rotate_theta(angle, old_scale, img))
 
 
+def prepare_bbox_points(bboxes):
+    bboxes = bboxes.reshape(*bboxes.shape[:-1], -1, 2)
+    bboxes = torch.cat(
+        [
+            bboxes,
+            torch.stack(
+                [
+                    torch.stack([bboxes[..., 0, 0], bboxes[..., 1, 1]], dim=-1),
+                    torch.stack([bboxes[..., 1, 0], bboxes[..., 0, 1]], dim=-1),
+                ],
+                dim=-2,
+            ),
+        ],
+        dim=-2,
+    )
+    return torch.cat([bboxes, bboxes.new_ones(*bboxes.shape[:-1], 1)], dim=-1)
+
+
+def get_bboxes_from_points(bboxes):
+    return torch.stack(
+        [
+            bboxes[..., 0].min(dim=-1)[0],
+            bboxes[..., 1].min(dim=-1)[0],
+            bboxes[..., 0].max(dim=-1)[0],
+            bboxes[..., 1].max(dim=-1)[0],
+        ],
+        dim=-1,
+    )
+
+
+def rotate_points(points, angle, scale):
+    """
+    points--points
+    angle --rotation angle
+    return--rotated img
+    """
+    M, big_scale = get_reverse_rotate_marix(-angle, scale)
+    points[..., 1] = scale[0] - points[..., 1]
+    points = points.matmul(points.new_tensor(M.T))
+    points[..., 1] = big_scale[0] - points[..., 1]
+    return points
+
+
+def reverse_rotate_points(points, angle, scale):
+    """
+    points--points
+    angle --rotation angle
+    return--rotated img
+    """
+    M, big_scale = get_reverse_rotate_marix(-angle, scale)
+    points[..., 1] = big_scale[0] - points[..., 1]
+    points = points.matmul(points.new_tensor(M.T))
+    points[..., 1] = scale[0] - points[..., 1]
+    return points
+
+
 @TRANSFORMS.register_module()
 class RotateImage(BaseTransform):
     """Rotate the image by theta.
@@ -156,7 +212,7 @@ class RandomFlip(_RandomFlip):
             results["theta"] = -results["theta"]
 
 
-def main():
+def rotate_img_test():
     output_path = "rotate_image"
     if os.path.exists(output_path):
         shutil.rmtree(output_path)
@@ -223,6 +279,24 @@ def main():
             os.path.join(output_path, f"torch_numpy_back_diff_{theta}.jpg"),
             np.abs(torch_back_image - back_image),
         )
+
+
+def rotate_points():
+    angle = 30
+    center = (1, 0)
+    M = torch.tensor(
+        get_3x3_rotate_matrix(cv2.getRotationMatrix2D(center, -angle, 1)),
+        dtype=torch.float32,
+    )
+    points = torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]])
+    points = torch.cat([points, torch.ones(points.shape[:-1] + (1,))], dim=-1)
+    res_points = points.matmul(M.T)
+    print(res_points)
+
+
+def main():
+    rotate_points()
+    rotate_img_test()
 
 
 if __name__ == "__main__":
