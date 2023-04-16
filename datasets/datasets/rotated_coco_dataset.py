@@ -8,7 +8,143 @@ from collections import defaultdict
 from typing import List, Union
 
 from mmdet.datasets import CocoDataset
+from mmdet.datasets.api_wrappers import COCO as _COCO
 from mmengine.dataset import force_full_init
+from pycocotools.coco import _isArrayLike
+
+
+class COCO(_COCO):
+    def createIndex(self):
+        super().createIndex()
+        if "rotated_annotations" in self.dataset:
+            self.rotated_anns = {
+                int(k): v for k, v in self.dataset["rotated_annotations"].items()
+            }
+
+    def load_rotated_anns(self, ids):
+        if _isArrayLike(ids):
+            return [self.rotated_anns.get(id, []) for id in ids]
+        elif type(ids) == int:
+            return [self.rotated_anns.get(ids, [])]
+
+
+class RotatedCocoRotateAnnDataset(CocoDataset):
+    """Rotated dataset for COCO."""
+
+    COCOAPI = COCO
+
+    def parse_data_info(self, raw_data_info: dict) -> Union[dict, List[dict]]:
+        """Parse raw annotation to target format.
+
+        Args:
+            raw_data_info (dict): Raw data information load from ``ann_file``
+
+        Returns:
+            Union[dict, List[dict]]: Parsed annotation.
+        """
+        img_info = raw_data_info["raw_img_info"]
+        ann_info = raw_data_info["raw_ann_info"]
+        rotated_ann_info = raw_data_info["raw_rotated_ann_info"]
+
+        data_info = {}
+
+        # TODO: need to change data_prefix['img'] to data_prefix['img_path']
+        img_path = os.path.join(self.data_prefix["img"], img_info["file_name"])
+        if self.data_prefix.get("seg", None):
+            seg_map_path = os.path.join(
+                self.data_prefix["seg"],
+                img_info["file_name"].rsplit(".", 1)[0] + self.seg_map_suffix,
+            )
+        else:
+            seg_map_path = None
+        data_info["img_path"] = img_path
+        data_info["img_id"] = img_info["img_id"]
+        data_info["seg_map_path"] = seg_map_path
+        data_info["height"] = img_info["height"]
+        data_info["width"] = img_info["width"]
+
+        instances = []
+        for i, (ann, rotated_ann) in enumerate(zip(ann_info, rotated_ann_info)):
+            instance = {}
+
+            if ann.get("ignore", False):
+                continue
+            x1, y1, w, h = ann["bbox"]
+            if ann["area"] <= 0 or w < 1 or h < 1:
+                continue
+            if ann["category_id"] not in self.cat_ids:
+                continue
+            bbox = [x1, y1, x1 + w, y1 + h]
+
+            if ann.get("iscrowd", False):
+                instance["ignore_flag"] = 1
+            else:
+                instance["ignore_flag"] = 0
+            instance["bbox"] = bbox
+            instance["bbox_label"] = self.cat2label[ann["category_id"]]
+
+            if ann.get("segmentation", None):
+                instance["mask"] = ann["segmentation"]
+
+            instance["theta"] = 0
+            instance["id"] = i
+            instances.append(instance)
+            for theta, bbox in rotated_ann:
+                x1, y1, w, h = bbox
+                if w < 1 or h < 1:
+                    continue
+
+                inst = copy.copy(instance)
+                inst["theta"] = theta
+                inst.pop("mask", None)
+                inst["bbox"] = [x1, y1, x1 + w, y1 + h]
+                instances.append(inst)
+
+        data_info["instances"] = instances
+        return data_info
+
+    def load_data_list(self) -> List[dict]:
+        """Load annotations from an annotation file named as ``self.ann_file``
+
+        Returns:
+            List[dict]: A list of annotation.
+        """  # noqa: E501
+        with self.file_client.get_local_path(self.ann_file) as local_path:
+            self.coco = self.COCOAPI(local_path)
+        # The order of returned `cat_ids` will not
+        # change with the order of the `classes`
+        self.cat_ids = self.coco.get_cat_ids(cat_names=self.metainfo["classes"])
+        self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
+        self.cat_img_map = copy.deepcopy(self.coco.cat_img_map)
+
+        img_ids = self.coco.get_img_ids()
+        data_list = []
+        total_ann_ids = []
+        for img_id in img_ids:
+            raw_img_info = self.coco.load_imgs([img_id])[0]
+            raw_img_info["img_id"] = img_id
+
+            ann_ids = self.coco.get_ann_ids(img_ids=[img_id])
+            raw_ann_info = self.coco.load_anns(ann_ids)
+            raw_rotated_ann_info = self.coco.load_rotated_anns(ann_ids)
+            total_ann_ids.extend(ann_ids)
+
+            parsed_data_info = self.parse_data_info(
+                {
+                    "raw_ann_info": raw_ann_info,
+                    "raw_img_info": raw_img_info,
+                    "raw_rotated_ann_info": raw_rotated_ann_info,
+                }
+            )
+            data_list.append(parsed_data_info)
+        if self.ANN_ID_UNIQUE:
+            assert len(set(total_ann_ids)) == len(
+                total_ann_ids
+            ), f"Annotation ids in '{self.ann_file}' are not unique!"
+
+        del self.coco
+
+        return data_list
 
 
 class RotatedCocoOriginAnnDataset(CocoDataset):

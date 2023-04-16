@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from mmcv.transforms import BaseTransform
+from mmdet.datasets.transforms import LoadAnnotations, PackDetInputs
 from mmdet.datasets.transforms import RandomFlip as _RandomFlip
 from mmdet.registry import TRANSFORMS
 
@@ -166,6 +167,60 @@ def reverse_rotate_points(points, angle, scale):
     points = points.matmul(points.new_tensor(M.T))
     points[..., 1] = scale[0] - points[..., 1]
     return points
+
+
+@TRANSFORMS.register_module()
+class LoadRotatedAnnotations(LoadAnnotations):
+    def transform(self, results: dict) -> dict:
+        """Function to load multiple types annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded bounding box, label and
+            semantic segmentation.
+        """
+
+        results = super().transform(results)
+        self._load_theta(results)
+        self._load_id(results)
+        return results
+
+    def _load_theta(self, results: dict) -> None:
+        """Private function to load theta annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+        Returns:
+            dict: The dict contains loaded theta annotations.
+        """
+        results["theta"] = np.array(
+            [inst["theta"] for inst in results.get("instances", [])], dtype=np.float32
+        )
+
+    def _load_id(self, results: dict) -> None:
+        """Private function to load id annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+        Returns:
+            dict: The dict contains loaded id annotations.
+        """
+        results["id"] = np.array(
+            [inst["id"] for inst in results.get("instances", [])], dtype=np.int32
+        )
+
+
+@TRANSFORMS.register_module()
+class PackRotatedDetInputs(PackDetInputs):
+    mapping_table = {
+        "gt_bboxes": "bboxes",
+        "gt_bboxes_labels": "labels",
+        "gt_masks": "masks",
+        "theta": "theta",
+        "id": "id",
+    }
 
 
 @TRANSFORMS.register_module()
