@@ -6,7 +6,7 @@ from collections import defaultdict
 import mmcv
 import torch
 
-from datasets import (
+from datasets.transformers import (
     get_bboxes_from_points,
     prepare_bbox_points,
     reverse_rotate_points,
