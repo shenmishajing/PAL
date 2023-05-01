@@ -5,7 +5,7 @@ __base__:
     - ../../models/dino/dino-4scale_r50.yaml
 
 model:
-    class_path: models.generate_pesudo_detection_annotation.GeneratePesudeDetectionAnnotation
+    class_path: models.GeneratePesudeDetectionAnnotation
     init_args:
         model:
             init_args:
