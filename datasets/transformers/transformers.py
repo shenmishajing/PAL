@@ -23,13 +23,7 @@ def get_rotate_marix(angle, scale):
     # 参数2为旋转角度,正值-逆时针旋转;负值-顺时针旋转
     # 参数3为各向同性的比例因子,1.0原图，2.0变成原来的2倍，0.5变成原来的0.5倍
     M = cv2.getRotationMatrix2D(rotate_center, angle, 1.0)
-    # 计算图像新边界
-    big_w = int(h * np.abs(M[0, 1]) + w * np.abs(M[0, 0]))
-    big_h = int(h * np.abs(M[0, 0]) + w * np.abs(M[0, 1]))
-    # 调整旋转矩阵以考虑平移
-    M[0, 2] += (big_w - w) / 2
-    M[1, 2] += (big_h - h) / 2
-    return M, (big_h, big_w)
+    return M, scale
 
 
 def get_reverse_rotate_marix(angle, scale):
