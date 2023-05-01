@@ -7,12 +7,7 @@ from mmlab_lightning.model import MMLabModelAdapter
 
 
 class MMDetModelAdapter(MMLabModelAdapter):
-    def __init__(
-        self,
-        predict_tasks=None,
-        *args,
-        **kwargs,
-    ):
+    def __init__(self, predict_tasks=None, *args, **kwargs):
         if predict_tasks is None:
             predict_tasks = ["cam", "result"]
         super().__init__(*args, predict_tasks=predict_tasks, **kwargs)
