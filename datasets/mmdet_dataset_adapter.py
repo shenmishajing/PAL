@@ -1,6 +1,5 @@
 from lightning.pytorch.cli import instantiate_class
-
-from mmlab_lightning.dataset import MMLabDataSetAdapter
+from mmlab_lightning.datasets import MMLabDataSetAdapter
 
 
 class MMDetDataSetAdapter(MMLabDataSetAdapter):
