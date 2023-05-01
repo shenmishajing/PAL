@@ -1,5 +1,5 @@
 model:
-    class_path: models.mmdet_model_adapter.MMDetModelAdapter
+    class_path: mmlab_lightning.models.MMDetModelAdapter
     init_args:
         model:
             class_path: mmdet.models.detectors.DINO

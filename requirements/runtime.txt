@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 scikit-learn
 lightning
 jsonargparse[all]
 mmengine
 mmdet>=3.0.0rc0
+=======
+mmlab_lightning
+>>>>>>> mmdet_lightning/main

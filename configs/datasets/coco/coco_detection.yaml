@@ -1,5 +1,5 @@
 data:
-    class_path: datasets.mmdet_dataset_adapter.MMDetDataSetAdapter
+    class_path: mmlab_lightning.datasets.MMDetDataSetAdapter
     init_args:
         visualizer_cfg:
             class_path: mmdet.visualization.DetLocalVisualizer
@@ -65,10 +65,8 @@ data:
                 prefetch_factor: 2
                 pin_memory: true
                 persistent_workers: true
-                collate_fn:
-                    type: pseudo_collate
                 batch_sampler:
-                    class_path: datasets.mmdet_dataset_adapter.AspectRatioBatchSampler
+                    class_path: datasets.batch_sampler.aspect_ratio.AspectRatioBatchSampler
             val:
                 batch_size: 8
 
