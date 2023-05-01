@@ -1,0 +1,5 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/coco_dna/coco_dna_segmentation.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/mask-rcnn/mask-rcnn_r50_fpn.yaml
