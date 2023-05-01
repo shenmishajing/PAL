@@ -77,7 +77,7 @@ data:
                 persistent_workers: true
                 pin_memory: true
                 batch_sampler:
-                    class_path: datasets.mmdet_dataset_adapter.AspectRatioBatchSampler
+                    class_path: datasets.AspectRatioBatchSampler
             val:
                 batch_size: 6
             predict:
