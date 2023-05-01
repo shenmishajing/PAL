@@ -1,5 +1,5 @@
 data:
-    class_path: mmlab_lightning.datasets.MMDetDataSetAdapter
+    class_path: mmlab_lightning.datasets.MMLabDataSetAdapter
     init_args:
         visualizer_cfg:
             class_path: mmdet.visualization.DetLocalVisualizer

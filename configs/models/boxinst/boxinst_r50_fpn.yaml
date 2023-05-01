@@ -1,5 +1,5 @@
 model:
-    class_path: models.mmdet_model_adapter.MMDetModelAdapter
+    class_path: mmlab_lightning.models.MMLabModelAdapter
     init_args:
         model:
             class_path: models.models.single_stage_instance_seg.SingleStageInstanceSegmentor
