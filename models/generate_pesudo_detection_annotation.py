@@ -62,19 +62,19 @@ def get_iou(box1, box2):
 
 
 class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._output_paths = ["annotation"]
-        # self._output_paths = ["rotate_back_result"]
+    def __init__(self, predict_tasks=None, *args, **kwargs):
+        if predict_tasks is None:
+            predict_tasks = ["annotation"]
+        super().__init__(*args, predict_tasks=predict_tasks, **kwargs)
 
     def on_predict_epoch_start(self) -> None:
         super().on_predict_epoch_start()
 
-        if "annotation" in self.output_paths:
-            self.annotation_output_path = (
-                self.trainer.datamodule.dataset.ann_file.replace(
-                    "annotations", "rotated_annotations_temp/{theta}"
-                )
+        if "annotation" in self.predict_tasks:
+            self.predict_tasks[
+                "annotation"
+            ] = self.trainer.datamodule.dataset.ann_file.replace(
+                "annotations", "rotated_annotations/{theta}"
             )
 
             ann = json.load(open(self.trainer.datamodule.dataset.ann_file))
@@ -94,17 +94,7 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
                 self.ann_jsons[theta] = copy.deepcopy(ann)
                 self.rotated_anns[theta] = defaultdict(list)
 
-    def predict_forward(self, batch, *args, **kwargs):
-        predict_outputs = self(batch, mode="predict")
-        for output in predict_outputs:
-            # rescale gt bboxes
-            assert output.get("scale_factor") is not None
-            output.gt_instances.bboxes /= output.gt_instances.bboxes.new_tensor(
-                output.scale_factor
-            ).repeat((1, 2))
-        return dict(predict_outputs=predict_outputs)
-
-    def annotation_visualization(self, *args, predict_outputs, **kwargs):
+    def predict_annotation(self, *args, predict_outputs, **kwargs):
         for output in predict_outputs:
             pred_instances = output.pred_instances
             pred_instances = pred_instances[
@@ -131,7 +121,7 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
                     ann
                 )
 
-    def result_visualization(self, *args, predict_outputs, **kwargs):
+    def predict_result(self, *args, predict_outputs, output_path, **kwargs):
         for output in predict_outputs:
             # result visualization
             name = os.path.basename(output.img_path)
@@ -144,12 +134,12 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
                 name,
                 image,
                 output,
-                out_file=os.path.join(self.result_output_path, name),
+                out_file=os.path.join(output_path, name),
                 draw_gt=False,
                 **self.visualizer_kwargs,
             )
 
-    def rotate_back_result_visualization(self, *args, predict_outputs, **kwargs):
+    def predict_rotate_back_result(self, *args, predict_outputs, output_path, **kwargs):
         for output in predict_outputs:
             # result visualization
             output.pred_instances.bboxes = get_bboxes_from_points(
@@ -169,12 +159,12 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
                 name,
                 image,
                 output,
-                out_file=os.path.join(self.rotate_back_result_output_path, name),
+                out_file=os.path.join(output_path, name),
                 **self.visualizer_kwargs,
             )
 
     def on_predict_epoch_end(self) -> None:
-        if "annotation" in self.output_paths:
+        if "annotation" in self.predict_tasks:
             # get associated rotate annotations
             image_shape = {
                 ann["id"]: (ann["height"], ann["width"])
@@ -266,10 +256,12 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
             ):
                 theta = int(theta)
                 os.makedirs(
-                    os.path.dirname(self.annotation_output_path.format(theta=theta)),
+                    os.path.dirname(
+                        self.predict_tasks["annotation"].format(theta=theta)
+                    ),
                     exist_ok=True,
                 )
                 json.dump(
                     self.ann_jsons[theta],
-                    open(self.annotation_output_path.format(theta=theta), "w"),
+                    open(self.predict_tasks["annotation"].format(theta=theta), "w"),
                 )
