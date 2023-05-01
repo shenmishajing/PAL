@@ -1,1 +1,1 @@
-from .boxinst_head import *
+from . import *
