@@ -1,0 +1,113 @@
+model:
+    class_path: models.MMDetModelAdapter
+    init_args:
+        model:
+            class_path: models.models.single_stage_instance_seg.SingleStageInstanceSegmentor
+            init_args:
+                backbone:
+                    depth: 50
+                    frozen_stages: 1
+                    init_cfg:
+                        checkpoint: torchvision://resnet50
+                        type: Pretrained
+                    norm_cfg:
+                        requires_grad: true
+                        type: BN
+                    norm_eval: true
+                    num_stages: 4
+                    out_indices: !!python/tuple
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                    style: pytorch
+                    type: ResNet
+                bbox_head:
+                    center_sampling: true
+                    centerness_on_reg: true
+                    conv_bias: true
+                    dcn_on_last_conv: false
+                    feat_channels: 256
+                    in_channels: 256
+                    loss_bbox:
+                        loss_weight: 1.0
+                        type: GIoULoss
+                    loss_centerness:
+                        loss_weight: 1.0
+                        type: CrossEntropyLoss
+                        use_sigmoid: true
+                    loss_cls:
+                        alpha: 0.25
+                        gamma: 2.0
+                        loss_weight: 1.0
+                        type: FocalLoss
+                        use_sigmoid: true
+                    norm_on_bbox: true
+                    num_classes: 80
+                    num_params: 169
+                    stacked_convs: 4
+                    strides:
+                        - 8
+                        - 16
+                        - 32
+                        - 64
+                        - 128
+                    type: CondInstBboxHead
+                data_preprocessor:
+                    bgr_to_rgb: true
+                    mean:
+                        - 123.675
+                        - 116.28
+                        - 103.53
+                    pad_mask: true
+                    pad_size_divisor: 32
+                    std:
+                        - 58.395
+                        - 57.12
+                        - 57.375
+                    type: mmdet.DetDataPreprocessor
+                mask_head:
+                    feat_channels: 8
+                    loss_mask:
+                        activate: true
+                        eps: 5.0e-06
+                        loss_weight: 1.0
+                        type: DiceLoss
+                        use_sigmoid: true
+                    mask_feature_head:
+                        end_level: 2
+                        feat_channels: 128
+                        in_channels: 256
+                        mask_stride: 8
+                        norm_cfg:
+                            requires_grad: true
+                            type: BN
+                        num_stacked_convs: 4
+                        out_channels: 8
+                        start_level: 0
+                    mask_out_stride: 4
+                    max_masks_to_train: 300
+                    num_layers: 3
+                    size_of_interest: 8
+                    type: CondInstMaskHead
+                neck:
+                    add_extra_convs: on_output
+                    in_channels:
+                        - 256
+                        - 512
+                        - 1024
+                        - 2048
+                    num_outs: 5
+                    out_channels: 256
+                    relu_before_extra_convs: true
+                    start_level: 1
+                    type: FPN
+                test_cfg:
+                    mask_thr: 0.5
+                    max_per_img: 100
+                    min_bbox_size: 0
+                    nms:
+                        iou_threshold: 0.6
+                        type: nms
+                    nms_pre: 1000
+                    score_thr: 0.05
