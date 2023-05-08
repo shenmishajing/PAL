@@ -32,6 +32,7 @@ trainer:
           init_args:
               watch_model_cfg:
                   log: all
+        - class_path: lightning_template.utils.callbacks.custom_repr.CustomReprCallback
         - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     # train len
     max_epochs: null
