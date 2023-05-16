@@ -154,7 +154,7 @@ class RotatedCocoOriginAnnDataset(CocoDataset):
         self,
         *args,
         theta: float = 5,
-        max_theta: float = 45,
+        max_theta: float = 90,
         add_origin: bool = True,
         length: int = None,
         **kwargs,
