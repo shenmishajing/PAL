@@ -1,0 +1,17 @@
+__base__: coco_dna_segmentation_train_detection.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            train:
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoAugAnnDataset
+                init_args:
+                    # max_theta: 0
+                    pipeline:
+                        insert_item:
+                            - [1, type: mmdet.RotateImage]
+        dataloader_cfg:
+            train:
+                batch_size: 3
+            val:
+                batch_size: 3
