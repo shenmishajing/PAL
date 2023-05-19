@@ -85,6 +85,10 @@ data:
                 num_workers: 24
 
 trainer:
+    logger:
+        init_args:
+            tags:
+                post_item: coco_dna
     callbacks:
         change_item:
             - - 0
