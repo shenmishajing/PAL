@@ -1,1 +1,1 @@
-mmlab_lightning
+mmlab-lightning
