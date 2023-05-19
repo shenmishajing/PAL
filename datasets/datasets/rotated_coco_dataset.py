@@ -10,6 +10,7 @@ from typing import List, Union
 from mmdet.datasets import CocoDataset
 from mmdet.datasets.api_wrappers import COCO as _COCO
 from mmengine.dataset import force_full_init
+from mmengine.fileio import get_local_path
 from pycocotools.coco import _isArrayLike
 
 
@@ -109,7 +110,9 @@ class RotatedCocoRotateAnnDataset(CocoDataset):
         Returns:
             List[dict]: A list of annotation.
         """  # noqa: E501
-        with self.file_client.get_local_path(self.ann_file) as local_path:
+        with get_local_path(
+            self.ann_file, backend_args=self.backend_args
+        ) as local_path:
             self.coco = self.COCOAPI(local_path)
         # The order of returned `cat_ids` will not
         # change with the order of the `classes`
@@ -227,7 +230,9 @@ class RotatedCocoOriginAnnDataset(CocoDataset):
         Returns:
             List[dict]: A list of annotation.
         """  # noqa: E501
-        with self.file_client.get_local_path(self.ann_file) as local_path:
+        with get_local_path(
+            self.ann_file, backend_args=self.backend_args
+        ) as local_path:
             self.coco = self.COCOAPI(local_path)
         # The order of returned `cat_ids` will not
         # change with the order of the `classes`
