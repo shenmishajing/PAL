@@ -1,4 +1,4 @@
-__base__: coco_dna_segmentation_train_detection.yaml
+__base__: nuclei_segmentation_train_detection.yaml
 
 data:
     init_args:
@@ -10,8 +10,3 @@ data:
                     pipeline:
                         insert_item:
                             - [1, type: mmdet.RotateImage]
-        dataloader_cfg:
-            train:
-                batch_size: 3
-            val:
-                batch_size: 3

@@ -14,8 +14,14 @@ data:
                         change_item:
                             - - 1
                               - with_mask: true
+        dataloader_cfg:
+            train:
+                batch_size: 1
+            val:
+                batch_size: 1
 
 trainer:
+    accumulate_grad_batches: 2
     callbacks:
         change_item:
             - - 0
