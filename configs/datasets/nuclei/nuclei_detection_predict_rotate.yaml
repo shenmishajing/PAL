@@ -11,8 +11,6 @@ data:
                 init_args:
                     # add_origin: false
                     # length: 10
-                    data_prefix:
-                        img: train
                     pipeline:
                         insert_item:
                             - [1, type: mmdet.RotateImage]
