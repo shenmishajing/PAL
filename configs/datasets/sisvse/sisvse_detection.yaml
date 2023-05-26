@@ -1,0 +1,122 @@
+data:
+    class_path: datasets.MMDetDataSetAdapter
+    init_args:
+        visualizer_cfg:
+            class_path: mmdet.visualization.DetLocalVisualizer
+            init_args:
+                text_color: white
+        evaluator_cfg:
+            train:
+                class_path: mmengine.evaluator.Evaluator
+                init_args:
+                    metrics:
+                        type: mmdet.CocoMetric
+                        ann_file: data/sisvse/instance_jsons/real_val_1.json
+                        metric: bbox
+                        format_only: false
+        dataset_cfg:
+            split_info:
+                split_format_to: [ann_file]
+                split_name_map:
+                    test: val
+                    predict: val
+            train:
+                class_path: mmdet.datasets.coco.CocoDataset
+                init_args:
+                    metainfo:
+                        classes:
+                            [
+                                HarmonicAce_Head,
+                                HarmonicAce_Body,
+                                MarylandBipolarForceps_Head,
+                                MarylandBipolarForceps_Wrist,
+                                MarylandBipolarForceps_Body,
+                                CadiereForceps_Head,
+                                CadiereForceps_Wrist,
+                                CadiereForceps_Body,
+                                CurvedAtraumaticGrasper_Head,
+                                CurvedAtraumaticGrasper_Body,
+                                Stapler_Head,
+                                Stapler_Body,
+                                MediumLargeClipApplier_Head,
+                                MediumLargeClipApplier_Wrist,
+                                MediumLargeClipApplier_Body,
+                                SmallClipApplier_Head,
+                                SmallClipApplier_Wrist,
+                                SmallClipApplier_Body,
+                                SuctionIrrigation,
+                                Needle,
+                                Endotip,
+                                Specimenbag,
+                                DrainTube,
+                                Liver,
+                                Stomach,
+                                Pancreas,
+                                Spleen,
+                                Gallbladder,
+                                Gauze,
+                                TheOther_Instruments,
+                                TheOther_Tissues,
+                            ]
+                    data_root: data/sisvse
+                    ann_file: instance_jsons/real_${split}_1.json
+                    data_prefix:
+                        img: images
+                    filter_cfg:
+                        filter_empty_gt: True
+                        min_size: 32
+                    pipeline:
+                        - type: mmdet.LoadImageFromFile
+                        - type: mmdet.LoadAnnotations
+                          with_bbox: true
+                        - type: mmdet.Resize
+                          scale: !!python/tuple [1333, 800]
+                          keep_ratio: true
+                        - type: mmdet.RandomFlip
+                          prob: 0.5
+                        - type: mmdet.PackDetInputs
+            val:
+                init_args:
+                    test_mode: True
+                    pipeline:
+                        - type: mmdet.LoadImageFromFile
+                        - type: mmdet.LoadAnnotations
+                          with_bbox: true
+                        - type: mmdet.Resize
+                          scale: !!python/tuple [1333, 800]
+                          keep_ratio: true
+                        - type: mmdet.PackDetInputs
+                          meta_keys:
+                              [
+                                  "img_id",
+                                  "img_path",
+                                  "ori_shape",
+                                  "img_shape",
+                                  "scale_factor",
+                              ]
+        dataloader_cfg:
+            train:
+                batch_size: 3
+                num_workers: 16
+                persistent_workers: true
+                pin_memory: true
+                batch_sampler:
+                    class_path: datasets.AspectRatioBatchSampler
+            val:
+                batch_size: 3
+            predict:
+                batch_size: 48
+                num_workers: 24
+
+trainer:
+    logger:
+        init_args:
+            tags:
+                post_item: sisvse
+    callbacks:
+        change_item:
+            - - 0
+              - init_args:
+                    monitor: val/coco/bbox_mAP_50
+                    filename: "epoch:{epoch}-val_map_50:{val/coco/bbox_mAP_50:.4g}"
+                    mode: max
