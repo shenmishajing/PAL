@@ -277,13 +277,19 @@ class RotatedCocoOriginAnnDataset(CocoDataset):
 
 
 class RotatedCocoAllAnnDataset(RotatedCocoOriginAnnDataset):
+    def __init__(self, *args, rotated_ann_paths=None, **kwargs) -> None:
+        if rotated_ann_paths is None:
+            rotated_ann_paths = ["annotations", "rotated_annotations"]
+        self.rotated_ann_paths = rotated_ann_paths
+        super().__init__(*args, **kwargs)
+
     def load_rotated_data_list(self) -> List[dict]:
         data_list = defaultdict(list)
         origin_ann_file = self.ann_file
         for theta in range(0, self.max_theta, self.theta):
             theta = int(theta + self.theta)
             ann_file = origin_ann_file.replace(
-                "annotations", f"rotated_annotations/{(theta)}"
+                self.rotated_ann_paths[0], f"{self.rotated_ann_paths[1]}/{theta}"
             )
 
             if os.path.exists(ann_file):

@@ -62,9 +62,12 @@ def get_iou(box1, box2):
 
 
 class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
-    def __init__(self, predict_tasks=None, *args, **kwargs):
+    def __init__(self, predict_tasks=None, rotated_ann_paths=None, *args, **kwargs):
         if predict_tasks is None:
             predict_tasks = ["annotation"]
+        if rotated_ann_paths is None:
+            rotated_ann_paths = ["annotations", "rotated_annotations"]
+        self.rotated_ann_paths = rotated_ann_paths
         super().__init__(*args, predict_tasks=predict_tasks, **kwargs)
 
     def on_predict_epoch_start(self) -> None:
@@ -74,7 +77,7 @@ class GeneratePesudeDetectionAnnotation(MMDetModelAdapter):
             self.predict_tasks[
                 "annotation"
             ] = self.trainer.datamodule.dataset.ann_file.replace(
-                "annotations", "rotated_annotations/{theta}"
+                self.rotated_ann_paths[0], f"{self.rotated_ann_paths[1]}/{{theta}}"
             )
 
             ann = json.load(open(self.trainer.datamodule.dataset.ann_file))
