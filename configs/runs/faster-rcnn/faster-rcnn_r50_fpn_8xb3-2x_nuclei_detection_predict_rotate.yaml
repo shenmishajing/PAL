@@ -1,0 +1,14 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/nuclei/nuclei_detection_predict_rotate.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/faster-rcnn/faster-rcnn_r50_fpn.yaml
+
+model:
+    class_path: models.GeneratePesudeDetectionAnnotation
+    init_args:
+        model:
+            init_args:
+                roi_head:
+                    bbox_head:
+                        num_classes: 1
