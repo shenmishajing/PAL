@@ -34,6 +34,20 @@ class RotatedCocoRotateAnnDataset(CocoDataset):
 
     COCOAPI = COCO
 
+    def __init__(
+        self,
+        *args,
+        theta_list: list = None,
+        theta_list_use_range: bool = True,
+        **kwargs,
+    ) -> None:
+        self.theta_list = (
+            list(range(*theta_list))
+            if theta_list_use_range and theta_list is not None
+            else theta_list
+        )
+        super().__init__(*args, **kwargs)
+
     def parse_data_info(self, raw_data_info: dict) -> Union[dict, List[dict]]:
         """Parse raw annotation to target format.
 
@@ -91,6 +105,8 @@ class RotatedCocoRotateAnnDataset(CocoDataset):
             instance["id"] = i
             instances.append(instance)
             for theta, bbox in rotated_ann:
+                if self.theta_list is not None and theta not in self.theta_list:
+                    continue
                 x1, y1, w, h = bbox
                 if w < 1 or h < 1:
                     continue
