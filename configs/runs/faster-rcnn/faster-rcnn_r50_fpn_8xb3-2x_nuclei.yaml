@@ -1,6 +1,6 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/nuclei/nuclei.yaml
+    - ../../datasets/nuclei/nuclei_detection.yaml
     - ../../schedules/schedule_2x.yaml
     - ../../models/faster-rcnn/faster-rcnn_r50_fpn.yaml
 

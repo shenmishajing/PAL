@@ -1,6 +1,6 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/nuclei/nuclei.yaml
+    - ../../datasets/nuclei/nuclei_detection.yaml
     - ../../schedules/schedule_2x.yaml
     - ../../models/dino/dino-4scale_r50.yaml
 
