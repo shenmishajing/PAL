@@ -1,0 +1,13 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/sisvse_detection.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/mask-rcnn/mask-rcnn_r50_fpn.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                roi_head:
+                    bbox_head:
+                        num_classes: 31
