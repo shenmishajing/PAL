@@ -1,6 +1,6 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/coco_dna/coco_dna_detection_detection_predict_rotate.yaml
+    - ../../datasets/coco_dna/coco_dna_detection_predict_rotate.yaml
     - ../../schedules/schedule_2x.yaml
     - ../../models/faster-rcnn/faster-rcnn_r50_fpn.yaml
 
