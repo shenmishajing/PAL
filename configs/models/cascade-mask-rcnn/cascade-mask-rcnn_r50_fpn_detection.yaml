@@ -1,0 +1,8 @@
+__base__: cascade-mask-rcnn_r50_fpn.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                roi_head:
+                    __delete__: [mask_head, mask_roi_extractor]
