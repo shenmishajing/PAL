@@ -1,6 +1,6 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/coco_dna/coco_dna_segmentation.yaml
+    - ../../datasets/sisvse/sisvse_segmentation.yaml
     - ../../schedules/schedule_2x.yaml
     - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn.yaml
 
@@ -12,8 +12,8 @@ model:
                     bbox_head:
                         change_items:
                             - - 0
-                              - num_classes: 1
+                              - num_classes: 31
                             - - 1
-                              - num_classes: 1
+                              - num_classes: 31
                             - - 2
-                              - num_classes: 1
+                              - num_classes: 31

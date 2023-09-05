@@ -1,6 +1,6 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/coco_dna/coco_dna_segmentation.yaml
+    - ../../datasets/nuclei/nuclei_detection.yaml
     - ../../schedules/schedule_2x.yaml
     - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn.yaml
 
