@@ -2,7 +2,7 @@ __base__:
     - ../../default_runtime.yaml
     - ../../datasets/nuclei/nuclei_detection_predict_rotate.yaml
     - ../../schedules/schedule_2x.yaml
-    - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn.yaml
+    - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn_detection.yaml
 
 model:
     class_path: models.GeneratePesudeDetectionAnnotation
@@ -19,3 +19,9 @@ model:
                               - num_classes: 1
                             - - 2
                               - num_classes: 1
+
+data:
+    init_args:
+        dataloader_cfg:
+            train:
+                batch_size: 8

@@ -13,3 +13,9 @@ model:
                 roi_head:
                     bbox_head:
                         num_classes: 31
+
+data:
+    init_args:
+        dataloader_cfg:
+            train:
+                batch_size: 16
