@@ -5,7 +5,10 @@ __base__:
     - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn.yaml
 
 model:
+    class_path: models.GeneratePesudeDetectionAnnotation
     init_args:
+        rotated_ann_paths:
+            [instance_jsons, rotated_instance_jsons_cascade-mask-rcnn]
         model:
             init_args:
                 roi_head:

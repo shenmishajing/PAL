@@ -7,6 +7,7 @@ __base__:
 model:
     class_path: models.GeneratePesudeDetectionAnnotation
     init_args:
+        rotated_ann_paths: [annotations, rotated_annotations_faster-rcnn]
         model:
             init_args:
                 roi_head:

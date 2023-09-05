@@ -5,7 +5,9 @@ __base__:
     - ../../models/mask-rcnn/mask-rcnn_r50_fpn.yaml
 
 model:
+    class_path: models.GeneratePesudeDetectionAnnotation
     init_args:
+        rotated_ann_paths: [annotations, rotated_annotations_mask-rcnn]
         model:
             init_args:
                 roi_head:
