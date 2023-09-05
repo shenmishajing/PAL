@@ -1,0 +1,11 @@
+__base__: coco_segmentation_train_detection.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            train:
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoAugAnnDataset
+                init_args:
+                    pipeline:
+                        insert_item:
+                            - [1, type: mmdet.RotateImage]

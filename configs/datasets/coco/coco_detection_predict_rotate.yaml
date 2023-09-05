@@ -1,0 +1,18 @@
+__base__: coco_detection.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            split_info:
+                split_name_map:
+                    predict: train
+            predict:
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoOriginAnnDataset
+                init_args:
+                    pipeline:
+                        insert_item:
+                            - [1, type: mmdet.RotateImage]
+                        change_item:
+                            - - -1
+                              - meta_keys:
+                                    post_item: theta
