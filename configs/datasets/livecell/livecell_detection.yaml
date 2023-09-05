@@ -1,0 +1,101 @@
+data:
+    class_path: datasets.MMDetDataSetAdapter
+    init_args:
+        visualizer_cfg:
+            class_path: mmdet.visualization.DetLocalVisualizer
+            init_args:
+                text_color: white
+        evaluator_cfg:
+            split_info:
+                split_format_to: [metrics.ann_file]
+                split_name_map:
+                    test: val
+                    predict: val
+            train:
+                class_path: mmengine.evaluator.Evaluator
+                init_args:
+                    metrics:
+                        type: mmdet.CocoMetric
+                        ann_file: data/livecell-dataset/annotations/LIVECell_filtered/livecell_coco_${split}.json
+                        metric: bbox
+                        format_only: false
+        dataset_cfg:
+            split_info:
+                split_format_to: [ann_file]
+                split_name_map:
+                    test: val
+                    predict: val
+            train:
+                class_path: mmdet.datasets.coco.CocoDataset
+                init_args:
+                    metainfo:
+                        classes: [cell]
+                    data_root: data/livecell-dataset
+                    ann_file: annotations/LIVECell_filtered/livecell_coco_${split}.json
+                    data_prefix:
+                        img: images/livecell_train_val_images
+                    filter_cfg:
+                        filter_empty_gt: True
+                        min_size: 32
+                    pipeline:
+                        - type: mmdet.LoadImageFromFile
+                        - type: mmdet.LoadAnnotations
+                          with_bbox: true
+                        - type: mmdet.Resize
+                          scale: !!python/tuple [704, 520]
+                          keep_ratio: true
+                        - type: mmdet.RandomFlip
+                          prob: 0.5
+                        - type: mmdet.PackDetInputs
+            val:
+                init_args:
+                    test_mode: True
+                    pipeline:
+                        - type: mmdet.LoadImageFromFile
+                        - type: mmdet.LoadAnnotations
+                          with_bbox: true
+                        - type: mmdet.Resize
+                          scale: !!python/tuple [704, 520]
+                          keep_ratio: true
+                        - type: mmdet.PackDetInputs
+                          meta_keys:
+                              [
+                                  "img_id",
+                                  "img_path",
+                                  "ori_shape",
+                                  "img_shape",
+                                  "scale_factor",
+                              ]
+            test:
+                init_args:
+                    data_prefix:
+                        img: images/livecell_test_images
+            predict:
+                init_args:
+                    indices: 12
+        dataloader_cfg:
+            train:
+                batch_size: 6
+                num_workers: 16
+                persistent_workers: true
+                pin_memory: true
+                batch_sampler:
+                    class_path: datasets.AspectRatioBatchSampler
+            val:
+                batch_size: 6
+            predict:
+                batch_size: 12
+                num_workers: 24
+
+trainer:
+    logger:
+        init_args:
+            tags:
+                post_item: livecell
+    callbacks:
+        change_item:
+            - - 0
+              - init_args:
+                    monitor: val/coco/bbox_mAP_50
+                    filename: "epoch:{epoch}-val_map_50:{val/coco/bbox_mAP_50:.4g}"
+                    mode: max

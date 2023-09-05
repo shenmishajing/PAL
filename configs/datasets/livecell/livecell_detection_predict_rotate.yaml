@@ -1,0 +1,22 @@
+__base__: livecell_detection.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            split_info:
+                split_name_map:
+                    predict: train
+            predict:
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoOriginAnnDataset
+                init_args:
+                    # add_origin: false
+                    # length: 10
+                    data_prefix:
+                        img: train
+                    pipeline:
+                        insert_item:
+                            - [1, type: mmdet.RotateImage]
+                        change_item:
+                            - - -1
+                              - meta_keys:
+                                    post_item: theta
