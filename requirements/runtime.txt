@@ -1,1 +1,2 @@
 mmlab-lightning
+shell-command-launcher
