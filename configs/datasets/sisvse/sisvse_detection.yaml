@@ -102,11 +102,8 @@ data:
                 pin_memory: true
                 batch_sampler:
                     class_path: datasets.AspectRatioBatchSampler
-            val:
-                batch_size: 3
             predict:
                 batch_size: 48
-                num_workers: 24
 
 trainer:
     logger:
