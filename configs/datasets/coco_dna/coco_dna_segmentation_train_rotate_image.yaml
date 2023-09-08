@@ -10,8 +10,3 @@ data:
                     pipeline:
                         insert_item:
                             - [1, type: mmdet.RotateImage]
-        dataloader_cfg:
-            train:
-                batch_size: 3
-            val:
-                batch_size: 3
