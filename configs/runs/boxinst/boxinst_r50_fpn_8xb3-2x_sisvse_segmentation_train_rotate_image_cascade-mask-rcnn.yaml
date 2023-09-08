@@ -1,0 +1,11 @@
+__base__:
+    - boxinst_r50_fpn_8xb3-2x_sisvse_segmentation_train_detection.yaml
+    - ../../datasets/sisvse/sisvse_segmentation_train_rotate_image.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            train:
+                init_args:
+                    rotated_ann_paths:
+                        [annotations, rotated_annotations_cascade-mask-rcnn]
