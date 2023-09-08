@@ -17,10 +17,28 @@ def do_encode_mask_results(mask):
     ]
 
 
+def get_encode_mask_results(results, start_position=0, num=None, end_position=None):
+    if num is not None:
+        end_position = start_position + num
+
+    if end_position is None:
+        end_position = len(results)
+
+    for i in range(start_position, end_position):
+        if "masks" in results[i][1] and isinstance(
+            results[i][1]["masks"], multiprocessing.pool.AsyncResult
+        ):
+            results[i][1]["masks"] = results[i][1]["masks"].get()
+
+    return end_position
+
+
 @METRICS.register_module(force=True)
 class CocoMetric(_CocoMetric):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.encode_mask_results_parallel_num = 100
+        self.encode_mask_results_current_position = None
         self.encode_mask_results_pool = None
 
     # TODO: data_batch is no longer needed, consider adjusting the
@@ -37,8 +55,8 @@ class CocoMetric(_CocoMetric):
         """
         if self.encode_mask_results_pool is None:
             self.encode_mask_results_pool = multiprocessing.Pool()
+            self.encode_mask_results_current_position = 0
 
-        cur_result = []
         for data_sample in data_samples:
             result = dict()
             pred = data_sample["pred_instances"]
@@ -48,13 +66,23 @@ class CocoMetric(_CocoMetric):
             result["labels"] = pred["labels"].cpu().numpy()
             # encode mask to RLE
             if "masks" in pred:
-                result["masks"] = (
-                    self.encode_mask_results_pool.map_async(
-                        do_encode_mask_results, pred["masks"].detach().cpu().numpy()
+                if isinstance(pred["masks"], torch.Tensor):
+                    if (
+                        len(self.results) - self.encode_mask_results_current_position
+                        >= self.encode_mask_results_parallel_num
+                    ):
+                        self.encode_mask_results_current_position = (
+                            get_encode_mask_results(
+                                self.results,
+                                self.encode_mask_results_current_position,
+                                1,
+                            )
+                        )
+                    result["masks"] = self.encode_mask_results_pool.map_async(
+                        do_encode_mask_results, pred["masks"].detach().cpu().numpy(), 5
                     )
-                    if isinstance(pred["masks"], torch.Tensor)
-                    else pred["masks"]
-                )
+                else:
+                    result["masks"] = pred["masks"]
             # some detectors use different scores for bbox and mask
             if "mask_scores" in pred:
                 result["mask_scores"] = pred["mask_scores"].cpu().numpy()
@@ -72,21 +100,19 @@ class CocoMetric(_CocoMetric):
                 )
                 gt["anns"] = data_sample["instances"]
             # add converted result to the results list
-            cur_result.append((gt, result))
-
-        for r in cur_result:
-            if "masks" in r[1] and isinstance(
-                r[1]["masks"], multiprocessing.pool.AsyncResult
-            ):
-                r[1]["masks"] = r[1]["masks"].get()
-
-        self.results.extend(cur_result)
+            self.results.append((gt, result))
 
     def evaluate(self, *args, **kwargs) -> dict:
         if self.encode_mask_results_pool is not None:
             self.encode_mask_results_pool.close()
             self.encode_mask_results_pool.join()
             self.encode_mask_results_pool = None
+
+            get_encode_mask_results(
+                self.results, self.encode_mask_results_current_position
+            )
+            self.encode_mask_results_current_position = None
+
         return super().evaluate(*args, **kwargs)
 
 
