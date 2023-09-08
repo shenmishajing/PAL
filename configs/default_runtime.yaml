@@ -34,6 +34,9 @@ trainer:
               watch_model_cfg:
                   log: all
         - class_path: lightning_template.utils.callbacks.custom_repr.CustomReprCallback
+        - class_path: lightning_template.utils.callbacks.set_sharing_strategy_callback.SetSharingStrategyCallback
+          init_args:
+              strategy: file_system
         - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     # train len
     max_epochs: null
