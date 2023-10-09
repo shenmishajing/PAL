@@ -75,11 +75,11 @@ class CocoMetric(_CocoMetric):
                             get_encode_mask_results(
                                 self.results,
                                 self.encode_mask_results_current_position,
-                                1,
+                                self.encode_mask_results_parallel_num // 2,
                             )
                         )
                     result["masks"] = self.encode_mask_results_pool.map_async(
-                        do_encode_mask_results, pred["masks"].detach().cpu().numpy(), 5
+                        do_encode_mask_results, pred["masks"].detach().cpu().numpy(), 10
                     )
                 else:
                     result["masks"] = pred["masks"]
