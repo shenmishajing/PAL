@@ -16,7 +16,7 @@ data:
                               - with_mask: true
 
 trainer:
-    check_val_every_n_epoch: 4
+    check_val_every_n_epoch: 24
     callbacks:
         change_item:
             - - 0
