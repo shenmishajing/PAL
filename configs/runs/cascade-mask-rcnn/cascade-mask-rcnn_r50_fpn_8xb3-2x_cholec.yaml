@@ -1,0 +1,19 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/cholec/cholec_segmentation.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                roi_head:
+                    bbox_head:
+                        change_items:
+                            - - 0
+                              - num_classes: 13
+                            - - 1
+                              - num_classes: 13
+                            - - 2
+                              - num_classes: 13

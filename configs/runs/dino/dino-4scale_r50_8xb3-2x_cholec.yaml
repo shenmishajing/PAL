@@ -1,0 +1,12 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/cholec/cholec_detection.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/dino/dino-4scale_r50.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                bbox_head:
+                    num_classes: 13
