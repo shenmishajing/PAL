@@ -1,0 +1,23 @@
+__base__: isic_segmentation_train_detection.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            train:
+                class_path: datasets.datasets.rotated_coco_dataset.RotatedCocoRotateAnnDataset
+                init_args:
+                    ann_file: rotated_annotations/0/${split}.json
+                    pipeline:
+                        change_item:
+                            - [1, type: mmdet.LoadRotatedAnnotations]
+                            - - -1
+                              - type: mmdet.PackRotatedDetInputs
+            val:
+                class_path: mmdet.datasets.coco.CocoDataset
+                init_args:
+                    ann_file: annotations/${split}.json
+        dataloader_cfg:
+            train:
+                batch_size: 2
+            val:
+                batch_size: 2

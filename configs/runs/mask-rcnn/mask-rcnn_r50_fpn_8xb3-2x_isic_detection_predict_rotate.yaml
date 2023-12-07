@@ -1,0 +1,15 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/isic/isic_detection_predict_rotate.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/mask-rcnn/mask-rcnn_r50_fpn.yaml
+
+model:
+    class_path: models.GeneratePesudeDetectionAnnotation
+    init_args:
+        rotated_ann_paths: [annotations, rotated_annotations_mask-rcnn]
+        model:
+            init_args:
+                roi_head:
+                    bbox_head:
+                        num_classes: 1
