@@ -1,0 +1,26 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../datasets/nuclei/nuclei_segmentation_train_detection.yaml
+    - ../../schedules/schedule_2x.yaml
+    - ../../models/cascade-mask-rcnn/cascade-mask-rcnn_r50_fpn_detection.yaml
+
+model:
+    init_args:
+        model:
+            class_path: models.models.two_stage_predict_ellipse_segmentation.TwoStagePredictEllipseSegmentationDetector
+            init_args:
+                roi_head:
+                    bbox_head:
+                        change_items:
+                            - - 0
+                              - num_classes: 1
+                            - - 1
+                              - num_classes: 1
+                            - - 2
+                              - num_classes: 1
+
+data:
+    init_args:
+        dataloader_cfg:
+            train:
+                batch_size: 8

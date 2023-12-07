@@ -1,1 +1,1 @@
-from . import *
+from .boxinst_head import RotateBoxInstMaskHead as RotateBoxInstMaskHead
